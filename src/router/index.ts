@@ -7,7 +7,10 @@ import 'nprogress/nprogress.css';
 const routes: RouteRecordRaw[] = [
     {
         path: '/',
-        redirect: '/dashboard',
+        redirect: (to) => {
+            const token = localStorage.getItem('token');
+            return token ? '/dashboard' : '/login';
+        },
     },
     {
         path: '/',
@@ -21,7 +24,7 @@ const routes: RouteRecordRaw[] = [
                     title: '系统首页',
                     noAuth: true,
                 },
-                component: () => import(/* webpackChunkName: "dashboard" */ '../views/dashboard.vue'),
+                component: () => import('../views/dashboard.vue'),
             },
             {
                 path: '/system-user',
@@ -30,7 +33,7 @@ const routes: RouteRecordRaw[] = [
                     title: '用户管理',
                     permiss: '11',
                 },
-                component: () => import(/* webpackChunkName: "system-user" */ '../views/system/user.vue'),
+                component: () => import('../views/system/user.vue'),
             },
             {
                 path: '/system-role',
@@ -39,7 +42,7 @@ const routes: RouteRecordRaw[] = [
                     title: '角色管理',
                     permiss: '12',
                 },
-                component: () => import(/* webpackChunkName: "system-role" */ '../views/system/role.vue'),
+                component: () => import('../views/system/role.vue'),
             },
             {
                 path: '/system-menu',
@@ -221,6 +224,69 @@ const routes: RouteRecordRaw[] = [
                 },
                 component: () => import(/* webpackChunkName: "statistic" */ '../views/element/statistic.vue'),
             },
+            {
+                path: '/products',
+                name: 'Products',
+                meta: {
+                    title: '商品管理',
+                    permiss: '51'
+                },
+                component: () => import('../views/products/ProductList.vue'),
+            },
+            {
+                path: '/products/create',
+                name: 'ProductCreate',
+                meta: {
+                    title: '新增商品',
+                    permiss: '51'
+                },
+                component: () => import('../views/products/ProductForm.vue'),
+            },
+            {
+                path: '/products/edit/:id',
+                name: 'ProductEdit',
+                meta: {
+                    title: '编辑商品',
+                    permiss: '51'
+                },
+                component: () => import('../views/products/ProductForm.vue'),
+            },
+            {
+                path: '/categories',
+                name: 'Categories',
+                meta: {
+                    title: '分类管理',
+                    permiss: '51'
+                },
+                component: () => import('../views/products/CategoryList.vue'),
+            },
+            {
+                path: '/orders',
+                name: 'Orders',
+                meta: {
+                    title: '订单管理',
+                    permiss: '51'
+                },
+                component: () => import('../views/products/OrderList.vue'),
+            },
+            {
+                path: '/user-list',
+                name: 'user-list',
+                meta: {
+                    title: '用户列表',
+                    permiss: '61'
+                },
+                component: () => import('../views/user/UserList.vue')
+            },
+            {
+                path: '/user-analysis',
+                name: 'user-analysis',
+                meta: {
+                    title: '用户分析',
+                    permiss: '61'
+                },
+                component: () => import('../views/user/UserAnalysis.vue')
+            }
         ],
     },
     {
@@ -273,13 +339,20 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
     NProgress.start();
-    const role = localStorage.getItem('vuems_name');
+    const token = localStorage.getItem('token');
     const permiss = usePermissStore();
 
-    if (!role && to.meta.noAuth !== true) {
+    // 白名单路由，不需要登录就可以访问
+    const whiteList = ['/login', '/register', '/reset-pwd'];
+    
+    if (!token && !whiteList.includes(to.path)) {
+        // 未登录且访问的不是白名单页面，重定向到登录页
         next('/login');
-    } else if (typeof to.meta.permiss == 'string' && !permiss.key.includes(to.meta.permiss)) {
-        // 如果没有权限，则进入403
+    } else if (token && to.path === '/login') {
+        // 已登录且访问登录页，重定向到首页
+        next('/dashboard');
+    } else if (typeof to.meta.permiss === 'string' && !permiss.key.includes(to.meta.permiss)) {
+        // 没有权限，进入403
         next('/403');
     } else {
         next();

@@ -1,60 +1,49 @@
 import { defineStore } from 'pinia';
 
-interface ObjectList {
-    [key: string]: string[];
+export interface PermissState {
+    key: string[];
+    defaultList: {
+        [key: string]: string[];
+    };
 }
 
 export const usePermissStore = defineStore('permiss', {
-    state: () => {
-        const defaultList: ObjectList = {
+    state: (): PermissState => {
+        // 从 localStorage 获取权限状态
+        const username = localStorage.getItem('vuems_name') || '';
+        const defaultList = {
             admin: [
-                '0',
-                '1',
-                '11',
-                '12',
-                '13',
-                '2',
-                '21',
-                '22',
-                '23',
-                '24',
-                '25',
-                '26',
-                '27',
-                '28',
-                '29',
-                '291',
-                '292',
-                '3',
-                '31',
-                '32',
-                '33',
-                '34',
-                '4',
-                '41',
-                '42',
-                '5',
-                '7',
-                '6',
-                '61',
-                '62',
-                '63',
-                '64',
-                '65',
-                '66',
+                '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                '11', '12', '13', '14', '15',
+                '21', '22', '23', '24', '25', '26', '27', '28', '29',
+                '31', '32', '33', '34', '35',
+                '41', '42', '43', '44', '45',
+                '51', '52', '53', '54', '55',
+                '61', '62'
             ],
-            user: ['0', '1', '11', '12', '13'],
+            user: ['1', '2']
         };
-        const username = localStorage.getItem('vuems_name');
-        console.log(username);
+
+        // 根据用户名获取对应权限
+        const key = username === 'admin' ? defaultList.admin : defaultList.user;
+
         return {
-            key: (username == 'admin' ? defaultList.admin : defaultList.user) as string[],
-            defaultList,
+            key,
+            defaultList
         };
     },
     actions: {
         handleSet(val: string[]) {
             this.key = val;
-        },
+        }
     },
+    persist: {
+        enabled: true,
+        strategies: [
+            {
+                key: 'permiss',
+                storage: localStorage
+            }
+        ]
+    }
 });
